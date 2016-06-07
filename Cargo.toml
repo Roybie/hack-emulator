@@ -1,0 +1,6 @@
+[package]
+name = "hack-emulator"
+version = "0.1.0"
+authors = ["Roy Brunton <notnurbyor@googlemail.com>"]
+
+[dependencies]
