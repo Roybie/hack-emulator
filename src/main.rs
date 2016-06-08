@@ -1,5 +1,6 @@
 extern crate byteorder;
 extern crate sdl;
+extern crate time;
 
 use byteorder::{LittleEndian, ReadBytesExt };
 
@@ -18,10 +19,10 @@ use computer::Computer;
 mod computer;
 
 fn main() {
-    let clock_delay = Duration::from_millis(2);
-
     let rom_file_name = env::args().nth(1).unwrap();
     let rom = read_bin(rom_file_name);
+
+    let cycle_time = 2000000; // nanoseconds 500hz
 
     let two: i16 = 2;
 
@@ -32,6 +33,9 @@ fn main() {
     let screen = video::set_video_mode(512, 256, 8, &[video::SurfaceFlag::HWSurface], &[video::VideoFlag::DoubleBuf]).unwrap();
 
     'main : loop {
+
+        let start_time = time::precise_time_ns();
+
         //check keyboard and update keyboard memory map
         'key : loop {
             match sdl::event::poll_event() {
@@ -59,7 +63,10 @@ fn main() {
         screen.flip();
 
         //sleep to simulate clock speed
-        thread::sleep(clock_delay);
+        let remaining_time = cycle_time - (time::precise_time_ns() - start_time);
+        if remaining_time > 0 && remaining_time < cycle_time {
+            thread::sleep(Duration::new(0, remaining_time as u32));
+        }
     }
     sdl::quit();
 }
