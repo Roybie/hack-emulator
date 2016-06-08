@@ -23,6 +23,8 @@ fn main() {
     let rom = read_bin(rom_file_name);
 
     let cycle_time = 2000000; // nanoseconds 500hz
+    let scale: u16 = 2;
+    let res = (512 * scale, 256 * scale);
 
     let two: i16 = 2;
 
@@ -30,7 +32,7 @@ fn main() {
 
     sdl::init(&[sdl::InitFlag::Video, sdl::InitFlag::Timer]);
 
-    let screen = video::set_video_mode(512, 256, 8, &[video::SurfaceFlag::HWSurface], &[video::VideoFlag::DoubleBuf]).unwrap();
+    let screen = video::set_video_mode(res.0 as isize, res.1 as isize, 8, &[video::SurfaceFlag::HWSurface], &[video::VideoFlag::DoubleBuf]).unwrap();
 
     'main : loop {
 
@@ -49,21 +51,23 @@ fn main() {
         //hack.tick();
 
         //get screen and draw
-        screen.fill_rect(Some(Rect{x: 0, y: 0, w: 512, h: 256}), video::RGB(255, 255, 255));
+        screen.fill_rect(Some(Rect{x: 0, y: 0, w: res.0, h: res.1}), video::RGB(255, 255, 255));
         for (i, mem) in hack.get_screen().into_iter().enumerate() {
-            let mut pixel = *mem;
-            if pixel == 0xFFFF {
-                let y = i / 32;
-                let x = (i * 16) % 512;
-                screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: 16, h: 1}), video::RGB(0, 0, 0));
-            } else if pixel != 0x000 {
-                for j in 0..16 {
-                    if pixel & 1 != 0 {
-                        let y = i / 32;
-                        let x = j + (i * 16) % 512;
-                        screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: 1, h: 1}), video::RGB(0, 0, 0));
+            if *mem != 0 {
+                if *mem == 0xFFFF {
+                    let y = scale as usize * (i / 32);
+                    let x = scale as usize * ((i * 16) % 512);
+                    screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: scale * 16, h: scale}), video::RGB(0, 0, 0));
+                } else {
+                    let mut pixel = *mem;
+                    for j in 0..16 {
+                        if pixel & 1 != 0 {
+                            let y = scale as usize * (i / 32);
+                            let x = scale as usize * (j + (i * 16) % 512);
+                            screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: scale, h: scale}), video::RGB(0, 0, 0));
+                        }
+                        pixel = pixel >> 1;
                     }
-                    pixel = pixel >> 1;
                 }
             }
         }
