@@ -5,3 +5,6 @@ authors = ["Roy Brunton <notnurbyor@googlemail.com>"]
 
 [dependencies]
 byteorder = "*"
+
+[dependencies.sdl]
+git = "https://github.com/brson/rust-sdl.git"

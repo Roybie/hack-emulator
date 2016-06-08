@@ -1,3 +1,5 @@
+use sdl::event::Key;
+
 use super::{ Cpu, Memory, Rom };
 
 pub struct Computer {
@@ -18,8 +20,8 @@ impl Computer {
         self.cpu.execute_instruction(&self.rom, &mut self.memory);
     }
 
-    pub fn get_keys(&self) -> i16 {
-        self.memory.get_keys()
+    pub fn set_key(&mut self, key: i16, state: bool) {
+        self.memory.set_key(match state { true => key, false => 0 });
     }
 
     pub fn get_screen(&self) -> &[i16] {

@@ -45,7 +45,35 @@ impl Memory {
         &self.screen
     }
 
-    pub fn get_keys(&self) -> i16 {
-        self.keyboard
+    pub fn set_key(&mut self, key: i16) {
+        //map hack special keycodes from sdl
+        self.keyboard = match key {
+            13 | 271    => 128,     //newline
+            8           => 129,     //backspace
+            276         => 130,     //left arrow
+            273         => 131,     //up arrow
+            275         => 132,     //right arrow
+            274         => 133,     //down arrow
+            278         => 134,     //home
+            279         => 135,     //end
+            280         => 136,     //page up
+            281         => 137,     //page down
+            277         => 138,     //insert
+            127         => 139,     //delete
+            27          => 140,     //esc
+            282         => 141,     //f1
+            283         => 142,
+            284         => 143,
+            285         => 144,
+            286         => 145,
+            287         => 146,
+            288         => 147,
+            289         => 148,
+            290         => 149,
+            291         => 150,
+            292         => 151,
+            293         => 152,     //f12
+            _           => key,     //other keys
+        };
     }
 }
