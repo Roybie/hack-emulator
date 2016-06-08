@@ -5,9 +5,9 @@ const SCREEN_ADDR: usize = 0x4000;
 const KEYBD_ADDR: usize = 0x6000;
 
 pub struct Memory {
-    ram: Box<[u16]>,
-    screen: Box<[u16]>,
-    keyboard: u16,
+    ram: Box<[i16]>,
+    screen: Box<[i16]>,
+    keyboard: i16,
 }
 
 impl Memory {
@@ -18,7 +18,7 @@ impl Memory {
             keyboard: 0,
         }
     }
-    pub fn write_memory(&mut self, address: usize, value: u16) {
+    pub fn write_memory(&mut self, address: usize, value: i16) {
         if address < SCREEN_ADDR {
             self.ram[address] = value;
         } else if address < KEYBD_ADDR {
@@ -29,7 +29,7 @@ impl Memory {
             panic!("Invalid memory address: {:#x}", address);
         }
     }
-    pub fn read_memory(&self, address: usize) -> u16 {
+    pub fn read_memory(&self, address: usize) -> i16 {
         if address < SCREEN_ADDR {
             self.ram[address]
         } else if address < KEYBD_ADDR {
@@ -39,5 +39,13 @@ impl Memory {
         } else {
             panic!("Invalid memory address: {:#x}", address)
         }
+    }
+
+    pub fn get_screen(&self) -> &Box<[i16]> {
+        &self.screen
+    }
+
+    pub fn get_keys(&self) -> i16 {
+        self.keyboard
     }
 }

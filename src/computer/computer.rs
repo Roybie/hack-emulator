@@ -7,7 +7,7 @@ pub struct Computer {
 }
 
 impl Computer {
-    pub fn new(rom: Box<[u16]>) -> Computer {
+    pub fn new(rom: Box<[i16]>) -> Computer {
         Computer {
             cpu: Cpu::new(),
             memory: Memory::new(),
@@ -16,9 +16,13 @@ impl Computer {
     }
     pub fn tick(&mut self) {
         self.cpu.execute_instruction(&self.rom, &mut self.memory);
-        self.memory.write_memory(0, 0xabc);
     }
-    pub fn get_mem(&self, address: usize) -> u16 {
-         self.memory.read_memory(address)
+
+    pub fn get_keys(&self) -> i16 {
+        self.memory.get_keys()
+    }
+
+    pub fn get_screen(&self) -> &[i16] {
+        self.memory.get_screen()
     }
 }
