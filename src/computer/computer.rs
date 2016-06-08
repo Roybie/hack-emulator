@@ -1,5 +1,3 @@
-use sdl::event::Key;
-
 use super::{ Cpu, Memory, Rom };
 
 pub struct Computer {

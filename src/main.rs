@@ -23,6 +23,8 @@ fn main() {
     let rom_file_name = env::args().nth(1).unwrap();
     let rom = read_bin(rom_file_name);
 
+    let two: i16 = 2;
+
     let mut hack = Computer::new(rom);
 
     sdl::init(&[sdl::InitFlag::Video, sdl::InitFlag::Timer]);
@@ -43,7 +45,18 @@ fn main() {
         //hack.tick();
 
         //get screen and draw
-        hack.get_screen();
+        screen.fill_rect(Some(Rect{x: 0, y: 0, w: 512, h: 256}), video::RGB(255, 255, 255));
+        for (i, mem) in hack.get_screen().into_iter().enumerate() {
+            for j in 0..16 {
+                if mem & two.pow(j as u32) != 0 {
+                    let y = i / 32;
+                    let x = j + (i * 16) % 512;
+                    screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: 1, h: 1}), video::RGB(0, 0, 0));
+                }
+            }
+
+        }
+        screen.flip();
 
         //sleep to simulate clock speed
         thread::sleep(clock_delay);
