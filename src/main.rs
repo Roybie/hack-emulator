@@ -51,14 +51,21 @@ fn main() {
         //get screen and draw
         screen.fill_rect(Some(Rect{x: 0, y: 0, w: 512, h: 256}), video::RGB(255, 255, 255));
         for (i, mem) in hack.get_screen().into_iter().enumerate() {
-            for j in 0..16 {
-                if mem & two.pow(j as u32) != 0 {
-                    let y = i / 32;
-                    let x = j + (i * 16) % 512;
-                    screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: 1, h: 1}), video::RGB(0, 0, 0));
+            let mut pixel = *mem;
+            if pixel == 0xFFFF {
+                let y = i / 32;
+                let x = (i * 16) % 512;
+                screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: 16, h: 1}), video::RGB(0, 0, 0));
+            } else if pixel != 0x000 {
+                for j in 0..16 {
+                    if pixel & 1 != 0 {
+                        let y = i / 32;
+                        let x = j + (i * 16) % 512;
+                        screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: 1, h: 1}), video::RGB(0, 0, 0));
+                    }
+                    pixel = pixel >> 1;
                 }
             }
-
         }
         screen.flip();
 
