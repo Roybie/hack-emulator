@@ -14,7 +14,7 @@ impl Memory {
     pub fn new() -> Memory {
         Memory {
             ram: vec![0; RAM_SIZE].into_boxed_slice(),
-            screen: vec![97; SCREEN_SIZE].into_boxed_slice(),
+            screen: vec![0; SCREEN_SIZE].into_boxed_slice(),
             keyboard: 0,
         }
     }

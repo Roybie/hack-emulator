@@ -23,11 +23,9 @@ fn main() {
     let rom_file_name = env::args().nth(1).unwrap();
     let rom = read_bin(rom_file_name);
 
-    let cycle_time = 2000000; // nanoseconds 500hz
+    let cycle_time = 2000000; // nanoseconds, 500hz
     let scale: u32 = 2;
     let res = (512 * scale, 256 * scale);
-
-    let two: i16 = 2;
 
     let mut hack = Computer::new(rom);
 
@@ -36,7 +34,6 @@ fn main() {
 
     let window = video_subsystem.window("HACK computer", res.0, res.1)
         .position_centered()
-        //.fullscreen()
         .opengl()
         .build()
         .unwrap();
@@ -58,6 +55,7 @@ fn main() {
             }
         }
 
+        //Perform next cpu step
         //hack.tick();
 
         //get screen and draw
@@ -67,7 +65,7 @@ fn main() {
 
         for (i, mem) in hack.get_screen().into_iter().enumerate() {
             if *mem != 0 {
-                if *mem == 0xFFFF {
+                if *mem == -1 {
                     let y = scale as usize * (i / 32);
                     let x = scale as usize * ((i * 16) % 512);
                     renderer.fill_rect(Rect::new(x as i32, y as i32, scale * 16, scale));
@@ -85,6 +83,7 @@ fn main() {
             }
         }
         renderer.present();
+
         //sleep to simulate clock speed
         let remaining_time = cycle_time - (time::precise_time_ns() - start_time);
         if remaining_time > 0 && remaining_time < cycle_time {
