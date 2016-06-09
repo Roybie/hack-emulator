@@ -1,5 +1,5 @@
 extern crate byteorder;
-extern crate sdl;
+extern crate sdl2;
 extern crate time;
 
 use byteorder::{LittleEndian, ReadBytesExt };
@@ -10,9 +10,10 @@ use std::path::Path;
 use std::thread;
 use std::time::Duration;
 
-use sdl::event::Event;
-use sdl::Rect;
-use sdl::video;
+use sdl2::pixels::Color;
+use sdl2::event::Event;
+use sdl2::rect::Rect;
+use sdl2::keyboard::Keycode;
 
 use computer::Computer;
 
@@ -23,63 +24,73 @@ fn main() {
     let rom = read_bin(rom_file_name);
 
     let cycle_time = 2000000; // nanoseconds 500hz
-    let scale: u16 = 2;
+    let scale: u32 = 2;
     let res = (512 * scale, 256 * scale);
 
     let two: i16 = 2;
 
     let mut hack = Computer::new(rom);
 
-    sdl::init(&[sdl::InitFlag::Video, sdl::InitFlag::Timer]);
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
 
-    let screen = video::set_video_mode(res.0 as isize, res.1 as isize, 8, &[video::SurfaceFlag::HWSurface], &[video::VideoFlag::DoubleBuf]).unwrap();
+    let window = video_subsystem.window("HACK computer", res.0, res.1)
+        .position_centered()
+        //.fullscreen()
+        .opengl()
+        .build()
+        .unwrap();
+
+    let mut renderer = window.renderer().build().unwrap();
+    let mut event_pump = sdl_context.event_pump().unwrap();
 
     'main : loop {
 
         let start_time = time::precise_time_ns();
 
         //check keyboard and update keyboard memory map
-        'key : loop {
-            match sdl::event::poll_event() {
-                Event::Quit                     => break 'main,
-                Event::None                     => break 'key,
-                Event::Key(key, state, _, _)    => hack.set_key(key as i16, state),
-                _                               => (),
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. } => break 'main,
+                Event::KeyDown { keycode: Some(key), .. } => hack.set_key(key as i16, true),
+                Event::KeyUp { .. } => hack.set_key(0, false),
+                _ => (),
             }
         }
 
         //hack.tick();
 
         //get screen and draw
-        screen.fill_rect(Some(Rect{x: 0, y: 0, w: res.0, h: res.1}), video::RGB(255, 255, 255));
+        renderer.set_draw_color(Color::RGB(255, 255, 255));
+        renderer.clear();
+        renderer.set_draw_color(Color::RGB(0, 0, 0));
+
         for (i, mem) in hack.get_screen().into_iter().enumerate() {
             if *mem != 0 {
                 if *mem == 0xFFFF {
                     let y = scale as usize * (i / 32);
                     let x = scale as usize * ((i * 16) % 512);
-                    screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: scale * 16, h: scale}), video::RGB(0, 0, 0));
+                    renderer.fill_rect(Rect::new(x as i32, y as i32, scale * 16, scale));
                 } else {
                     let mut pixel = *mem;
                     for j in 0..16 {
                         if pixel & 1 != 0 {
                             let y = scale as usize * (i / 32);
                             let x = scale as usize * (j + (i * 16) % 512);
-                            screen.fill_rect(Some(Rect{x: x as i16, y: y as i16, w: scale, h: scale}), video::RGB(0, 0, 0));
+                            renderer.fill_rect(Rect::new(x as i32, y as i32, scale, scale));
                         }
                         pixel = pixel >> 1;
                     }
                 }
             }
         }
-        screen.flip();
-
+        renderer.present();
         //sleep to simulate clock speed
         let remaining_time = cycle_time - (time::precise_time_ns() - start_time);
         if remaining_time > 0 && remaining_time < cycle_time {
             thread::sleep(Duration::new(0, remaining_time as u32));
         }
     }
-    sdl::quit();
 }
 
 fn read_bin<P: AsRef<Path>>(path: P) -> Box<[i16]> {
