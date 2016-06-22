@@ -22,7 +22,7 @@ impl Computer {
         self.memory.set_key(match state { true => key, false => 0 });
     }
 
-    pub fn get_screen(&self) -> &[i16] {
+    pub fn get_screen(&self) -> &[u8] {
         self.memory.get_screen()
     }
 }

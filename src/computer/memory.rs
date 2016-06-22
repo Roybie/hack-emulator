@@ -1,12 +1,13 @@
 const RAM_SIZE: usize = 16 * 1024;
-const SCREEN_SIZE: usize = 16 * 512;
+const SCREEN_SIZE: usize = 256 * 512 * 3;
 
 const SCREEN_ADDR: usize = 0x4000;
 const KEYBD_ADDR: usize = 0x6000;
 
 pub struct Memory {
     ram: Box<[i16]>,
-    screen: Box<[i16]>,
+    cpu_screen: Box<[i16]>,
+    screen: Box<[u8]>,
     keyboard: i16,
 }
 
@@ -14,15 +15,30 @@ impl Memory {
     pub fn new() -> Memory {
         Memory {
             ram: vec![0; RAM_SIZE].into_boxed_slice(),
-            screen: vec![0; SCREEN_SIZE].into_boxed_slice(),
+            cpu_screen: vec![0; 512 * 16].into_boxed_slice(),
+            screen: vec![0xff; SCREEN_SIZE].into_boxed_slice(),
             keyboard: 0,
         }
     }
+
     pub fn write_memory(&mut self, address: usize, value: i16) {
         if address < SCREEN_ADDR {
             self.ram[address] = value;
         } else if address < KEYBD_ADDR {
-            self.screen[address - SCREEN_ADDR] = value;
+            self.cpu_screen[address - SCREEN_ADDR] = value;
+            let mut ind = (address - SCREEN_ADDR) * (16 * 3);
+            let mut mask = 0b1;
+            for _ in 0..16 {
+                let v = match value & mask {
+                    0 => 0xff,
+                    _ => 0,
+                };
+                self.screen[ind] = v;
+                self.screen[ind + 1] = v;
+                self.screen[ind + 2] = v;
+                ind += 3;
+                mask = mask << 1;
+            }
         } else if address == KEYBD_ADDR {
             self.keyboard = value;
         } else {
@@ -33,7 +49,7 @@ impl Memory {
         if address < SCREEN_ADDR {
             self.ram[address]
         } else if address < KEYBD_ADDR {
-            self.screen[address - SCREEN_ADDR]
+            self.cpu_screen[address - SCREEN_ADDR] as i16
         } else if address == KEYBD_ADDR {
             self.keyboard
         } else {
@@ -41,7 +57,7 @@ impl Memory {
         }
     }
 
-    pub fn get_screen(&self) -> &Box<[i16]> {
+    pub fn get_screen(&self) -> &Box<[u8]> {
         &self.screen
     }
 
@@ -75,7 +91,5 @@ impl Memory {
             69          => 152,     //f12
             _           => key,     //other keys
         };
-
-        println!("{}", self.keyboard);
     }
 }

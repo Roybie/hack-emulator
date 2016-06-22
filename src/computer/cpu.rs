@@ -1,5 +1,6 @@
 use super::{ Memory, Rom };
 
+#[derive(Debug)]
 enum Jump {
     Zero,
     Greater,
@@ -30,7 +31,7 @@ impl Cpu {
 
     pub fn execute_instruction(&mut self, rom: &Rom, memory: &mut Memory) {
         let instruction: i16 = rom.get_instruction(self.reg_pc as usize);
-        let op: bool = (instruction >> 15) == 1;
+        let op: bool = instruction & 0xe000 == 0xe000;
 
         match op {
             false => self.a_instruction(instruction),
@@ -39,6 +40,7 @@ impl Cpu {
     }
 
     pub fn a_instruction(&mut self, instruction: i16) {
+        //println!("{:02$b}, pc: {}", instruction, self.reg_pc, 16);
         self.reg_a = instruction;
         self.reg_pc += 1;
     }
@@ -51,34 +53,34 @@ impl Cpu {
         let dest_a = (instruction & 0b100000) >> 5;
         let comp = (instruction & 0b1111111000000) >> 6;
 
-        let reg_m:i16 = memory.read_memory(self.reg_a as usize);
 
+        //println!("{:02$b}, pc: {}", instruction, self.reg_pc, 16);
         let result:i16 = match comp {
             0b0101010 => 0,
             0b0111111 => 1,
             0b0111010 => -1,
             0b0001100 => self.reg_d,
             0b0110000 => self.reg_a,
-            0b1110000 => reg_m,
+            0b1110000 => memory.read_memory(self.reg_a as usize),
             0b0001101 => 0xFFFF ^ self.reg_d,
             0b0110001 => 0xFFFF ^ self.reg_a,
-            0b1110001 => 0xFFFF ^ reg_m,
+            0b1110001 => 0xFFFF ^ memory.read_memory(self.reg_a as usize),
             0b0011111 => self.reg_d + 1,
             0b0110111 => self.reg_a + 1,
-            0b1110111 => reg_m + 1,
+            0b1110111 => memory.read_memory(self.reg_a as usize) + 1,
             0b0001110 => self.reg_d - 1,
             0b0110010 => self.reg_a - 1,
-            0b1110010 => reg_m - 1,
+            0b1110010 => memory.read_memory(self.reg_a as usize) - 1,
             0b0000010 => self.reg_d + self.reg_a,
-            0b1000010 => self.reg_d + reg_m,
+            0b1000010 => self.reg_d + memory.read_memory(self.reg_a as usize),
             0b0010011 => self.reg_d - self.reg_a,
-            0b1010011 => self.reg_d - reg_m,
+            0b1010011 => self.reg_d - memory.read_memory(self.reg_a as usize),
             0b0000111 => self.reg_a - self.reg_d,
-            0b1000111 => reg_m - self.reg_d,
+            0b1000111 => memory.read_memory(self.reg_a as usize) - self.reg_d,
             0b0000000 => self.reg_d & self.reg_a,
-            0b1000000 => self.reg_d & reg_m,
+            0b1000000 => self.reg_d & memory.read_memory(self.reg_a as usize),
             0b0010101 => self.reg_d | self.reg_a,
-            0b1010101 => self.reg_d | reg_m,
+            0b1010101 => self.reg_d | memory.read_memory(self.reg_a as usize),
             _ => panic!("Unknown computation {:#b}", comp),
         };
 
